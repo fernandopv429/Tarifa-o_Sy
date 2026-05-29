@@ -8,9 +8,6 @@ export default defineConfig(({mode}) => {
   return {
     plugins: [react(), tailwindcss()],
     base: '/tmo/',
-    define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
@@ -19,8 +16,8 @@ export default defineConfig(({mode}) => {
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modify file watching is disabled to prevent flickering during agent edits.
-      // Permite o acesso pelo seu domínio da Nexus
-      allowedHosts: ['tarifa.nexusdevhub.com'],
+      // Permite o acesso por IP, domínio e qualquer Host header
+      allowedHosts: true,
       host: true, // Garante que o Vite ouça em todas as interfaces de rede
       hmr: process.env.DISABLE_HMR !== 'true',
     },
