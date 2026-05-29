@@ -10,6 +10,8 @@ async function startServer() {
   const app = express();
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
+  app.get('/favicon.ico', (req, res) => res.status(204).end());
+
   app.use(express.json());
   
   // Rewrite /tmo/api/... to /api/...
@@ -1352,6 +1354,28 @@ async function startServer() {
 
   // --- End API Routes ---
 
+  // Vite middleware for development
+  if (process.env.NODE_ENV !== 'production') {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+    });
+    app.get('/tmo', (req, res) => res.redirect('/tmo/'));
+    app.use(vite.middlewares);
+    app.get('/tmo/*', (req, res, next) => {
+      req.url = '/';
+      vite.middlewares(req, res, next);
+    });
+    app.get('/', (req, res) => res.redirect('/tmo/'));
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use('/tmo', express.static(distPath));
+    app.get('/tmo/*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+    app.get('/', (req, res) => res.redirect('/tmo/'));
+  }
+
   // Centralized Error Handling Middleware
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.error(`[Error] ${req.method} ${req.url}:`, err.message || err);
@@ -1380,26 +1404,9 @@ async function startServer() {
     res.status(statusCode).json({ error: message, code });
   });
 
-  // Vite middleware for development
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.get('/tmo', (req, res) => res.redirect('/tmo/'));
-    app.use(vite.middlewares);
-    app.get('/', (req, res) => res.redirect('/tmo/'));
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use('/tmo', express.static(distPath));
-    app.get('/tmo/*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-    app.get('/', (req, res) => res.redirect('/tmo/'));
-  }
-
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
   });
 }
 
