@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: smartos_app
+    command: ["npx", "tsx", "server.ts", "--host"]
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=mysql://smartos_user:smartos_pass@db:3306/smartos
+      - ADMIN_SECRET=admin123
+      - ADMIN_EMAIL=master@admin.com
+      - APP_URL=http://localhost:3000
+      - GEMINI_API_KEY=
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    container_name: smartos_db
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=smartos_root_pass
+      - MYSQL_DATABASE=smartos
+      - MYSQL_USER=smartos_user
+      - MYSQL_PASSWORD=smartos_pass
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  mysql_data:

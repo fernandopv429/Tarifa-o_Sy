@@ -1,0 +1,6 @@
+{
+  "name": "docker SmartOS",
+  "description": "Sistema de Gestão de Ordens de Serviço e Histórico de Equipamentos",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
