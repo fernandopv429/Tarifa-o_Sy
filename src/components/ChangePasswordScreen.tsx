@@ -16,7 +16,7 @@ export default function ChangePasswordScreen({ user, onSuccess, onCancel }: { us
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/auth/change-password', {
+      const res = await fetch('/tmo/api/auth/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: user.user, currentPassword: current, newPassword: newPass })

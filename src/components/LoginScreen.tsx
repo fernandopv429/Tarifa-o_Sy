@@ -13,7 +13,7 @@ export default function LoginScreen({ onLogin }: { onLogin: (u: AuthUser) => voi
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch('/tmo/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: email, password })

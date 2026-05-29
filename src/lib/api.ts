@@ -1,7 +1,8 @@
 export const apiFetch = async (url: string, userAuth: string, method = 'GET', body: any = null) => {
+  const fullUrl = url.startsWith('/api') ? `/tmo${url}` : url;
   const headers: any = { 'x-user-email': userAuth };
   if (body) headers['Content-Type'] = 'application/json';
-  const res = await fetch(url, { 
+  const res = await fetch(fullUrl, { 
     method, 
     headers, 
     body: body ? JSON.stringify(body) : null,

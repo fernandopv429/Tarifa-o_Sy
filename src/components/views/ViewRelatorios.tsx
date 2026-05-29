@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { apiFetch } from '../../lib/api';
+import { formatDateUTC } from '../../lib/dateUtils';
 import { AuthUser, Locatario, Equipamento } from '../../types';
 import { Download } from 'lucide-react';
 

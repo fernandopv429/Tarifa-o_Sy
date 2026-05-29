@@ -12,9 +12,18 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = process.env.PORT || 3000;
+  const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
   app.use(express.json());
+  
+  // Rewrite /tmo/api/... to /api/...
+  app.use((req, res, next) => {
+    if (req.url.startsWith('/tmo/api/')) {
+      req.url = req.url.replace('/tmo/api/', '/api/');
+    }
+    next();
+  });
+
   app.use(cors());
 
   // Database Connection
@@ -1381,6 +1390,7 @@ async function startServer() {
       server: { middlewareMode: true },
       appType: 'spa',
     });
+    app.get('/tmo', (req, res) => res.redirect('/tmo/'));
     app.use(vite.middlewares);
     app.get('/', (req, res) => res.redirect('/tmo/'));
   } else {
