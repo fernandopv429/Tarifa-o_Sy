@@ -6,7 +6,7 @@ services:
     container_name: smartos_app
     command: ["npx", "tsx", "server.ts", "--host"]
     ports:
-      - "3000:3000"
+      - "80:3000"
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - ADMIN_SECRET=admin123
