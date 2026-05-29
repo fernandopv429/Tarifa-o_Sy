@@ -147,12 +147,25 @@ async function startServer() {
       console.log('Database tables verified/created successfully.');
     } catch (error) {
       console.error('Failed to setup database tables:', error);
+      throw error;
     }
   }
 
   // Run the setup when we have a DATABASE_URL
   if (process.env.DATABASE_URL) {
-    setupDatabase();
+    const runSetupWithRetry = async (retries = 10, delay = 5000) => {
+      for (let i = 0; i < retries; i++) {
+        try {
+          await setupDatabase();
+          return;
+        } catch (error) {
+          console.log(`Retrying database setup in ${delay / 1000}s... (${i + 1}/${retries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+      console.error('Failed to setup database tables after maximum retries.');
+    };
+    runSetupWithRetry();
   }
 
   class ApiError extends Error {
