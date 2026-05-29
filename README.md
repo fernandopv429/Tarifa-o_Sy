@@ -57,6 +57,13 @@ docker-compose up -d --build
 
 Acesse em `http://localhost:3000`.
 
+## 👨‍💻 Desenvolvedor e Autor
+
+**NexusHubDev**
+- **Desenvolvedor:** Fernando Batista
+- **Site:** [https://nexusdevhub.com/](https://nexusdevhub.com/)
+- **LinkedIn:** [https://www.linkedin.com/in/fernandonascimentobatista/](https://www.linkedin.com/in/fernandonascimentobatista/)
+
 ## 🤝 Contribuição
 Fique à vontade para aprimorar, abrir issues ou submeter PRs. 
 

@@ -14,8 +14,8 @@ export default defineConfig(({mode}) => {
       },
     },
     server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modify file watching is disabled to prevent flickering during agent edits.
+      // HMR is disabled via DISABLE_HMR env var.
+      // Do not modify file watching is disabled to prevent flickering.
       // Permite o acesso por IP, domínio e qualquer Host header
       allowedHosts: true,
       host: true, // Garante que o Vite ouça em todas as interfaces de rede
