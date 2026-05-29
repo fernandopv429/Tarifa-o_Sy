@@ -12,9 +12,6 @@ COPY . .
 # Build the frontend and backend
 RUN npm run build
 
-# Install tsx globally to run TS directly
-RUN npm install -g tsx
-
 # Expose the application port
 EXPOSE 3000
 
