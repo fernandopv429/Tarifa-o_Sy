@@ -4,7 +4,7 @@ services:
   app:
     build: .
     container_name: smartos_app
-    command: ["npx", "tsx", "server.ts", "--host"]
+    command: ["npm", "run", "start"]
     ports:
       - "3000:3000"
     environment:

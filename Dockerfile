@@ -18,5 +18,5 @@ RUN npm install -g tsx
 # Expose the application port
 EXPOSE 3000
 
-# Start the server using tsx
-CMD ["tsx", "server.ts", "--host"]
+# Start the server using npm start
+CMD ["npm", "run", "start"]
