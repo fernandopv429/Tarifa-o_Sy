@@ -72,6 +72,9 @@ export default function LoginScreen({ onLogin }: { onLogin: (u: AuthUser) => voi
           </button>
         </form>
       </div>
+      <div className="fixed bottom-4 right-4 text-xs font-mono text-gray-400 opacity-0 hover:opacity-100 transition-opacity duration-300 cursor-default">
+        desenvolvido por fnb nexusdevhub
+      </div>
     </div>
   );
 }

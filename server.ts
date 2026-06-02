@@ -1373,6 +1373,7 @@ async function startServer() {
     app.get('/tmo/*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
+    app.get('/tmo', (req, res) => res.redirect('/tmo/'));
     app.get('/', (req, res) => res.redirect('/tmo/'));
   }
 
