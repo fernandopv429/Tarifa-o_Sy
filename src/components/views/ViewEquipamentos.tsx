@@ -39,7 +39,7 @@ export default function ViewEquipamentos({ user }: { user: AuthUser }) {
   
   const generateCsv = () => {
      let csv = "ID,Nome,Codigo,Tipo,Locatario,Ativo,DataCadastro\n";
-     data.forEach(d => csv += `${d.id},${d.nome || ''},${d.codigo},${d.tipo_nome},${d.locatario_nome},${d.ativo},${new Date(d.data_cadastro).toLocaleString()}\n`);
+     data.forEach(d => csv += `${d.id},${d.nome || ''},${d.codigo},${d.tipo_nome},${d.locatario_nome},${d.ativo},${new Date(d.data_cadastro).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}\n`);
      const blob = new Blob([csv], { type: 'text/csv' });
      const url = window.URL.createObjectURL(blob);
      const a = document.createElement('a');

@@ -35,12 +35,12 @@ export default function LoginScreen({ onLogin }: { onLogin: (u: AuthUser) => voi
         {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-6 text-sm">{error}</div>}
         <form onSubmit={submit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email ou CNPJ</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Mail className="h-5 w-5 text-gray-400" />
               </div>
-              <input type="email" pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$" title="O email deve conter um domínio válido (ex: @dominio.com.br)" required value={email} onChange={e => setEmail(e.target.value.toLowerCase().replace(/\s/g, ""))}
+              <input type="text" title="Insira seu email ou CNPJ (apenas números)" required value={email} onChange={e => setEmail(e.target.value.toLowerCase().replace(/\s/g, ""))}
                 className="pl-10 w-full block rounded-lg border-gray-300 shadow-sm focus:border-slate-800 focus:ring-slate-800 bg-gray-50 border p-2.5" />
             </div>
           </div>

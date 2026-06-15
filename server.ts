@@ -240,10 +240,10 @@ async function startServer() {
 
     const connection = await pool.getConnection();
     try {
-      const [rows]: any = await connection.query('SELECT * FROM md_app_users WHERE username = ?', [username]);
+      const [rows]: any = await connection.query('SELECT * FROM md_app_users WHERE username = ? OR locatario_cnpj = ? ORDER BY role = \'LOCATARIO_MASTER\' DESC LIMIT 1', [username, username]);
       
       if (rows.length === 0) {
-        throw new ApiError(`Credenciais incorretas: A senha está errada ou o email "${username}" não existe.`, 401, 'AUTH_FAILED');
+        throw new ApiError(`Credenciais incorretas: A senha está errada ou o email/CNPJ "${username}" não existe.`, 401, 'AUTH_FAILED');
       }
 
       let isMatch = false;
@@ -984,6 +984,13 @@ async function startServer() {
     if (!nome || !cnpj_cpf) throw new ApiError('Nome e CNPJ são obrigatórios', 400);
     const connection = await pool.getConnection();
     try {
+      if (contato_email && senha_master) {
+         const [existing]: any = await connection.query('SELECT id FROM md_app_users WHERE username = ?', [contato_email]);
+         if (existing.length > 0) {
+           throw new ApiError('Este email já está em uso.', 400);
+         }
+      }
+
       await connection.beginTransaction();
       
       await connection.query('INSERT INTO md_locatarios (nome, cnpj_cpf, endereco, telefone, contato_nome, contato_email) VALUES (?, ?, ?, ?, ?, ?)', 
@@ -999,8 +1006,11 @@ async function startServer() {
       
       await connection.commit();
       res.json({ success: true });
-    } catch(err) {
+    } catch(err: any) {
       await connection.rollback();
+      if (err.code === 'ER_DUP_ENTRY') {
+        throw new ApiError('Já existe um locatário com esse CNPJ/CPF.', 400);
+      }
       throw err;
     } finally { connection.release(); }
   }));
@@ -1021,6 +1031,11 @@ async function startServer() {
       
       await logAction((req as any).authUser.username, 'UPDATE_LOCATARIO', 'Atualizou locatário ID ' + id);
       res.json({ success: true });
+    } catch(err: any) {
+      if (err.code === 'ER_DUP_ENTRY') {
+        throw new ApiError('Essas informações de contato ou CNPJ já estão em uso.', 400);
+      }
+      throw err;
     } finally { connection.release(); }
   }));
 
@@ -1143,13 +1158,23 @@ async function startServer() {
        if (locatario_cnpj !== user.locatario_cnpj) throw new ApiError('Você não pode associar à outra empresa', 403);
     }
     
-    const hashed = await bcrypt.hash(password || 'senha123', 10);
     const connection = await pool.getConnection();
     try {
+      const [existing]: any = await connection.query('SELECT id FROM md_app_users WHERE username = ?', [username]);
+      if (existing.length > 0) {
+        throw new ApiError('Este email já está em uso.', 400);
+      }
+
+      const hashed = await bcrypt.hash(password || 'senha123', 10);
       await connection.query('INSERT INTO md_app_users (username, password, role, locatario_cnpj, nome) VALUES (?, ?, ?, ?, ?)', 
         [username, hashed, role, locatario_cnpj || null, nome]);
       await logAction(user.username, 'CREATE_USUARIO', 'Criou usuário ' + username);
       res.json({ success: true });
+    } catch(err: any) {
+      if (err.code === 'ER_DUP_ENTRY') {
+        throw new ApiError('Este email já está em uso.', 400);
+      }
+      throw err;
     } finally { connection.release(); }
   }));
 
@@ -1185,6 +1210,11 @@ async function startServer() {
       }
       await logAction(user.username, 'UPDATE_USUARIO', 'Atualizou usuário ' + id);
       res.json({ success: true });
+    } catch (err: any) {
+      if (err.code === 'ER_DUP_ENTRY') {
+        throw new ApiError('Este email já está em uso.', 400);
+      }
+      throw err;
     } finally { connection.release(); }
   }));
 

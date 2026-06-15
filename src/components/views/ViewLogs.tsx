@@ -97,7 +97,7 @@ export default function ViewLogs({ user }: { user: AuthUser }) {
             ) : (
               filteredData.map(d => (
                 <tr key={d.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                  <td className="p-3 text-slate-500 whitespace-nowrap">{new Date(d.data_hora).toLocaleString()}</td>
+                  <td className="p-3 text-slate-500 whitespace-nowrap">{new Date(d.data_hora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</td>
                   <td className="p-3 font-medium text-slate-800">{d.username}</td>
                   <td className="p-3">
                     <span className="px-2.5 py-1 text-[11px] font-semibold bg-slate-100 text-slate-700 rounded-md inline-block whitespace-nowrap border border-slate-200">
