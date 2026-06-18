@@ -142,6 +142,14 @@ async function startServer() {
         }
       }
 
+      try {
+        await connection.query("ALTER TABLE md_equipamentos ADD COLUMN data_hora_bloqueio DATETIME NULL;");
+      } catch (e: any) {
+        if (e.code !== 'ER_DUP_FIELDNAME') {
+           console.error('Migration error add data_hora_bloqueio', e);
+        }
+      }
+
       // Automatically backfill any orphaned equipments from md_dispositivos to md_equipamentos
       await connection.query(`
         INSERT IGNORE INTO md_equipamentos (codigo, nome, ativo)
@@ -199,12 +207,15 @@ async function startServer() {
   };
 
   const ensureEquipamentoExists = async (codigo: string) => {
-    if (!codigo) return;
+    if (!codigo) return null;
     const connection = await pool.getConnection();
     try {
       await connection.query('INSERT IGNORE INTO md_equipamentos (codigo, nome, ativo) VALUES (?, ?, ?)', [codigo, `Auto_ ${codigo}`, true]);
+      const [rows]: any = await connection.query('SELECT ativo FROM md_equipamentos WHERE codigo = ?', [codigo]);
+      return rows[0];
     } catch (err) {
       console.error('Error ensuring equipamento exists:', err);
+      return null;
     } finally {
       connection.release();
     }
@@ -349,8 +360,11 @@ async function startServer() {
     }
     
     data = parseDateString(data);
-    await ensureEquipamentoExists(equipamento);
-
+    const eqStatus = await ensureEquipamentoExists(equipamento);
+    if (eqStatus && eqStatus.ativo === 0) {
+      throw new ApiError('Equipamento inativo. Ingestão bloqueada.', 403);
+    }
+    
     let lastEntry = null;
     if (user) {
        const findQuery = `SELECT * FROM md_dispositivos WHERE equipamento = ? ORDER BY seq DESC, id DESC LIMIT 1`;
@@ -476,7 +490,10 @@ async function startServer() {
     if (!user) throw new ApiError('Usuário não especificado na requisição (simulação de token).', 401);
 
     const { equipamento, mac, os, operador, lat, lon, fw, build, build_num } = req.body;
-    await ensureEquipamentoExists(equipamento);
+    const eqStatus = await ensureEquipamentoExists(equipamento);
+    if (eqStatus && eqStatus.ativo === 0) {
+      throw new ApiError('Equipamento inativo. Operação bloqueada.', 403);
+    }
     
     // Aqui enviamos pro banco apenas o que o painel visual nos mandou.
     // O banco (ou via defaults, ou outras integrações) cuida do resto.
@@ -560,7 +577,10 @@ async function startServer() {
 
     if (!equipamento) throw new ApiError('O campo "equipamento" é obrigatório como identificador.', 400);
 
-    await ensureEquipamentoExists(equipamento);
+    const eqStatus = await ensureEquipamentoExists(equipamento);
+    if (eqStatus && eqStatus.ativo === 0) {
+      throw new ApiError('Equipamento inativo. Atualização bloqueada.', 403);
+    }
 
     // Busca o registro mais recente do mesmo equipamento para herdar campos não enviados
     const findQuery = `SELECT * FROM md_dispositivos WHERE equipamento = ? ORDER BY seq DESC, id DESC LIMIT 1`;
@@ -858,7 +878,10 @@ async function startServer() {
        throw new ApiError('Nome do equipamento e proprietário são obrigatórios.', 400);
     }
 
-    await ensureEquipamentoExists(equipamento);
+    const eqStatus = await ensureEquipamentoExists(equipamento);
+    if (eqStatus && eqStatus.ativo === 0) {
+      throw new ApiError('Equipamento inativo. Criação bloqueada.', 403);
+    }
 
     const connection = await pool.getConnection();
     try {
@@ -1020,8 +1043,8 @@ async function startServer() {
     const { nome, cnpj_cpf, endereco, telefone, contato_nome, contato_email, senha_master } = req.body;
     const connection = await pool.getConnection();
     try {
-      await connection.query('UPDATE md_locatarios SET nome=?, cnpj_cpf=?, endereco=?, telefone=?, contato_nome=?, contato_email=? WHERE id=?', 
-        [nome, cnpj_cpf, endereco, telefone, contato_nome, contato_email, id]);
+      await connection.query('UPDATE md_locatarios SET nome=?, endereco=?, telefone=?, contato_nome=?, contato_email=? WHERE id=?', 
+        [nome, endereco, telefone, contato_nome, contato_email, id]);
         
       if (contato_email && senha_master) {
          const hashed = await bcrypt.hash(senha_master, 10);
@@ -1100,10 +1123,11 @@ async function startServer() {
 
   app.post('/api/equipamentos', checkRole(['LOCADOR_MASTER', 'LOCADOR']), asyncHandler(async (req, res) => {
     const { nome, codigo, tipo_id, locatario_cnpj, ativo } = req.body;
+    const isAtivo = ativo ?? true;
     const connection = await pool.getConnection();
     try {
-      await connection.query('INSERT INTO md_equipamentos (nome, codigo, tipo_id, locatario_cnpj, ativo) VALUES (?, ?, ?, ?, ?)', 
-        [nome || null, codigo, tipo_id, locatario_cnpj, ativo ?? true]);
+      await connection.query('INSERT INTO md_equipamentos (nome, codigo, tipo_id, locatario_cnpj, ativo, data_hora_bloqueio) VALUES (?, ?, ?, ?, ?, ?)', 
+        [nome || null, codigo, tipo_id, locatario_cnpj, isAtivo, isAtivo ? null : new Date()]);
       await logAction((req as any).authUser.username, 'CREATE_EQUIPAMENTO', 'Criou equipamento ' + codigo);
       res.json({ success: true });
     } finally { connection.release(); }
@@ -1112,10 +1136,11 @@ async function startServer() {
   app.put('/api/equipamentos/:id', checkRole(['LOCADOR_MASTER', 'LOCADOR']), asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { nome, codigo, tipo_id, locatario_cnpj, ativo } = req.body;
+    const isAtivo = ativo ?? true;
     const connection = await pool.getConnection();
     try {
-      await connection.query('UPDATE md_equipamentos SET nome=?, codigo=?, tipo_id=?, locatario_cnpj=?, ativo=? WHERE id=?', 
-        [nome || null, codigo, tipo_id, locatario_cnpj, ativo ?? true, id]);
+      await connection.query('UPDATE md_equipamentos SET nome=?, codigo=?, tipo_id=?, locatario_cnpj=?, ativo=?, data_hora_bloqueio=? WHERE id=?', 
+        [nome || null, codigo, tipo_id, locatario_cnpj, isAtivo, isAtivo ? null : new Date(), id]);
       await logAction((req as any).authUser.username, 'UPDATE_EQUIPAMENTO', 'Atualizou equipamento ' + id);
       res.json({ success: true });
     } finally { connection.release(); }
@@ -1372,8 +1397,11 @@ async function startServer() {
 
       query += ' ORDER BY d.data_leitura DESC, d.hora_leitura DESC';
       
+      const isExport = req.query.export_full === 'true';
+      const bypassLimit = isExport && user.role.startsWith('LOCADOR');
+
       // Limit to 1000 items only if no specific date filter is used to prevent huge payloads
-      if (!data_inicio && !data_fim) {
+      if (!data_inicio && !data_fim && !bypassLimit) {
          query += ' LIMIT 1000';
       }
 

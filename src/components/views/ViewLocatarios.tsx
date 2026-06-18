@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { apiFetch } from '../../lib/api';
 import { Locatario, AuthUser } from '../../types';
 import { Edit2, Trash2 } from 'lucide-react';
+import { isValidCpfCnpj } from '../../lib/validators';
+import { maskCpfCnpj } from '../../lib/masks';
 
 export default function ViewLocatarios({ user }: { user: AuthUser }) {
   const [data, setData] = useState<Locatario[]>([]);
@@ -19,9 +21,9 @@ export default function ViewLocatarios({ user }: { user: AuthUser }) {
     setErrorMsg("");
 
     if (form.cnpj_cpf) {
-      const regex = /(^\d{3}\.\d{3}\.\d{3}\-\d{2}$)|(^\d{2}\.\d{3}\.\d{3}\/\d{4}\-\d{2}$)|(^\d{11}$)|(^\d{14}$)/;
-      if (!regex.test(form.cnpj_cpf)) {
-        setErrorMsg("Formato inválido para CNPJ/CPF. Digite apenas números ou utilize a pontuação correta.");
+      const digits = form.cnpj_cpf.replace(/\D/g, "");
+      if (!isValidCpfCnpj(digits)) {
+        setErrorMsg("CNPJ/CPF inválido. Verifique os dígitos.");
         return;
       }
     }
@@ -70,7 +72,7 @@ export default function ViewLocatarios({ user }: { user: AuthUser }) {
             {(data).filter((d) => Object.values(d || {}).join(" ").toLowerCase().includes(searchQuery.toLowerCase())).map((d) => (
               <tr key={d.id} className="border-b">
                 <td className="p-3">{d.nome}</td>
-                <td className="p-3">{d.cnpj_cpf}</td>
+                <td className="p-3">{maskCpfCnpj(d.cnpj_cpf || '')}</td>
                 <td className="p-3">{d.telefone}</td>
                 <td className="p-3">{d.contato_nome} <br/><span className="text-sm text-gray-500">{d.contato_email}</span></td>
                 <td className="p-3 flex gap-2">
@@ -90,7 +92,7 @@ export default function ViewLocatarios({ user }: { user: AuthUser }) {
             <form onSubmit={save} className="space-y-4">
               {errorMsg && <div className="bg-red-50 text-red-600 p-3 rounded text-sm border border-red-200">{errorMsg}</div>}
               <input required placeholder="Nome / Razão" className="w-full border p-2 rounded" value={form.nome||''} onChange={e=>setForm({...form, nome:e.target.value})} />
-              <input required placeholder="CNPJ/CPF" pattern="(^[0-9]{3}\.[0-9]{3}\.[0-9]{3}\-[0-9]{2}$)|(^[0-9]{2}\.[0-9]{3}\.[0-9]{3}\/[0-9]{4}\-[0-9]{2}$)|(^[0-9]{11}$)|(^[0-9]{14}$)" title="Formato inválido. Digite apenas números (11 para CPF, 14 para CNPJ) ou utilize a pontuação completa." className="w-full border p-2 rounded" value={form.cnpj_cpf||''} onChange={e=> { setForm({...form, cnpj_cpf: e.target.value}); if (errorMsg) setErrorMsg(""); }} />
+              <input required placeholder="CNPJ/CPF" pattern="(^[0-9]{11}$)|(^[0-9]{14}$)" title="Formato inválido. Digite apenas números (11 para CPF, 14 para CNPJ)." className={`w-full border p-2 rounded ${form.id ? 'bg-gray-100 cursor-not-allowed' : ''}`} value={maskCpfCnpj(form.cnpj_cpf || '')} onChange={e=> { setForm({...form, cnpj_cpf: e.target.value.replace(/\D/g, "")}); if (errorMsg) setErrorMsg(""); }} disabled={!!form.id} />
               <input placeholder="Endereço" className="w-full border p-2 rounded" value={form.endereco||''} onChange={e=>setForm({...form, endereco:e.target.value})} />
               <input placeholder="Telefone" className="w-full border p-2 rounded" value={form.telefone||''} onChange={e=>setForm({...form, telefone: e.target.value})} />
               <input placeholder="Nome do Contato" className="w-full border p-2 rounded" value={form.contato_nome||''} onChange={e=>setForm({...form, contato_nome:e.target.value})} />

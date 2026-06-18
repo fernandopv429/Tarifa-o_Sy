@@ -34,6 +34,7 @@ export interface Equipamento {
   locatario_cnpj: string;
   ativo: boolean;
   data_cadastro: string;
+  data_hora_bloqueio?: string | null;
   tipo_nome?: string;
   locatario_nome?: string;
   totalOs?: number;

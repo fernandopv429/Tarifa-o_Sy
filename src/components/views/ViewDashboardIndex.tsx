@@ -4,6 +4,7 @@ import { apiFetch } from '../../lib/api';
 import { AuthUser } from '../../types';
 import ViewTelemetria from './ViewTelemetria';
 import { formatDateUTC, formatFullDateUTC } from '../../lib/dateUtils';
+import { maskCpfCnpj } from '../../lib/masks';
 
 export default function ViewDashboardIndex({ user }: { user: AuthUser }) {
   const [stats, setStats] = useState<any[]>([]);
@@ -27,7 +28,7 @@ export default function ViewDashboardIndex({ user }: { user: AuthUser }) {
 
       equipamentos.forEach((e: any) => {
          const key = e.locatario_cnpj || 'Sem Empresa';
-         if (!grouped[key]) grouped[key] = { razao: e.locatario_nome || key, cnpj: key, numEquip: 0, numOs: 0, numAtivos: 0, numInativos: 0 };
+         if (!grouped[key]) grouped[key] = { razao: e.locatario_nome || (e.locatario_cnpj ? maskCpfCnpj(e.locatario_cnpj) : key), cnpj: key, numEquip: 0, numOs: 0, numAtivos: 0, numInativos: 0 };
          grouped[key].numEquip++;
          totalEquip++;
          if (e.ativo) {
@@ -47,7 +48,7 @@ export default function ViewDashboardIndex({ user }: { user: AuthUser }) {
       const osWithoutEquipment = telemetria.filter((t: any) => !equipamentos.find((e:any) => String(e.codigo).trim().toLowerCase() === String(t.equipamento).trim().toLowerCase()));
       osWithoutEquipment.forEach((t: any) => {
          const key = t.locatario_cnpj || 'Sem Empresa';
-         if (!grouped[key]) grouped[key] = { razao: t.locatario_nome || key, cnpj: key, numEquip: 0, numOs: 0, numAtivos: 0, numInativos: 0 };
+         if (!grouped[key]) grouped[key] = { razao: t.locatario_nome || (t.locatario_cnpj ? maskCpfCnpj(t.locatario_cnpj) : key), cnpj: key, numEquip: 0, numOs: 0, numAtivos: 0, numInativos: 0 };
          // Only increment if it wasn't already included in equipment counts, but wait, if it's orphan, we just increment. 
          grouped[key].numOs++;
          totalOs++;
@@ -97,9 +98,14 @@ export default function ViewDashboardIndex({ user }: { user: AuthUser }) {
                      <h3 className="font-bold text-slate-800 text-lg leading-tight">{e.codigo}</h3>
                      <p className="text-xs text-slate-500 mt-1">{compStats?.razao}</p>
                    </div>
-                   <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold ${e.ativo ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
-                      {e.ativo ? 'Ativo' : 'Inativo'}
-                   </span>
+                   <div className="flex flex-col items-end">
+                     <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold ${e.ativo ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+                        {e.ativo ? 'Ativo' : 'Inativo'}
+                     </span>
+                     {!e.ativo && e.data_hora_bloqueio && (
+                       <span className="text-[9px] text-red-600 mt-1">{formatFullDateUTC(e.data_hora_bloqueio)}</span>
+                     )}
+                   </div>
                 </div>
                 
                 <div className="space-y-2 mt-auto">

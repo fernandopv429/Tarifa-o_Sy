@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { apiFetch } from '../../lib/api';
+import { maskCpfCnpj } from '../../lib/masks';
 import { AuthUser, AppUser, Locatario } from '../../types';
 import { Edit2, ShieldAlert, ShieldCheck } from 'lucide-react';
 
@@ -73,7 +74,7 @@ export default function ViewUsuarios({ user }: { user: AuthUser }) {
                 </td>
                 <td className="p-3">{d.username}</td>
                 <td className="p-3">{d.role === 'LOCADOR_MASTER' ? 'Locador Master' : d.role === 'LOCADOR' ? 'Locador' : d.role === 'LOCATARIO_MASTER' ? 'Locatário Master' : d.role === 'LOCATARIO' ? 'Locatário Viewer' : d.role}</td>
-                <td className="p-3">{d.locatario_nome || d.locatario_cnpj || '-'}</td>
+                <td className="p-3">{d.locatario_nome || (d.locatario_cnpj ? maskCpfCnpj(d.locatario_cnpj) : '') || '-'}</td>
                 <td className="p-3">
                    {d.ativo || d.ativo === undefined ? <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded text-xs font-semibold">Ativo</span> : <span className="text-red-600 bg-red-50 px-2 py-1 flex items-center gap-1 w-max rounded text-xs font-semibold"><ShieldAlert size={14}/> Bloqueado</span>}
                 </td>
@@ -110,7 +111,7 @@ export default function ViewUsuarios({ user }: { user: AuthUser }) {
                     {(form.role === 'LOCATARIO_MASTER' || form.role === 'LOCATARIO') && (
                       <select required className="w-full border p-2 rounded" value={form.locatario_cnpj||''} onChange={e=>setForm({...form, locatario_cnpj: e.target.value})}>
                         <option value="">Selecione Locatário</option>
-                        {locatarios.map(l => <option key={l.cnpj_cpf} value={l.cnpj_cpf}>{l.nome} ({l.cnpj_cpf})</option>)}
+                        {locatarios.map(l => <option key={l.cnpj_cpf} value={l.cnpj_cpf}>{l.nome} ({l.cnpj_cpf ? maskCpfCnpj(l.cnpj_cpf) : ''})</option>)}
                       </select>
                     )}
                   </>

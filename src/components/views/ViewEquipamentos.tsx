@@ -1,6 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { apiFetch } from '../../lib/api';
+import { maskCpfCnpj } from '../../lib/masks';
+import { formatFullDateUTC } from '../../lib/dateUtils';
 import { AuthUser, Equipamento, TipoEquipamento, Locatario } from '../../types';
 import { Edit2, Trash2, Download } from 'lucide-react';
 
@@ -86,11 +88,16 @@ export default function ViewEquipamentos({ user }: { user: AuthUser }) {
                 <td className="p-3 font-medium">{d.nome || '-'}</td>
                 <td className="p-3 font-mono">{d.codigo}</td>
                 <td className="p-3">{d.tipo_nome || <span className="text-slate-400 italic">Sem Tipo</span>}</td>
-                <td className="p-3">{d.locatario_nome || d.locatario_cnpj || <span className="text-slate-400 italic">Sem Empresa</span>}</td>
+                <td className="p-3">{d.locatario_nome || (d.locatario_cnpj ? maskCpfCnpj(d.locatario_cnpj) : '') || <span className="text-slate-400 italic">Sem Empresa</span>}</td>
                 <td className="p-3">
                   <span className={`px-2 py-1 rounded text-xs ${d.ativo ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
-                    {d.ativo ? 'Ativo' : 'Inativo'}
+                     {d.ativo ? 'Ativo' : 'Inativo'}
                   </span>
+                  {!d.ativo && d.data_hora_bloqueio && (
+                    <div className="text-[10px] text-red-600 mt-1" title="Data/Hora do Bloqueio">
+                      {formatFullDateUTC(d.data_hora_bloqueio)}
+                    </div>
+                  )}
                 </td>
                 <td className="p-3 font-medium">{d.totalOs || 0}</td>
                 {podeEditar && (
@@ -120,7 +127,7 @@ export default function ViewEquipamentos({ user }: { user: AuthUser }) {
 
               <select required className="w-full border p-2 rounded" value={form.locatario_cnpj||''} onChange={e=>setForm({...form, locatario_cnpj: e.target.value})}>
                 <option value="">Selecione o Locatário</option>
-                {locatarios.map(l => <option key={l.cnpj_cpf} value={l.cnpj_cpf}>{l.nome} ({l.cnpj_cpf})</option>)}
+                {locatarios.map(l => <option key={l.cnpj_cpf} value={l.cnpj_cpf}>{l.nome} ({l.cnpj_cpf ? maskCpfCnpj(l.cnpj_cpf) : ''})</option>)}
               </select>
               
               <label className="flex items-center gap-2">

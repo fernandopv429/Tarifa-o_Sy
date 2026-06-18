@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { apiFetch } from '../../lib/api';
 import { formatDateUTC } from '../../lib/dateUtils';
+import { maskCpfCnpj } from '../../lib/masks';
 import { AuthUser, Locatario, Equipamento } from '../../types';
 import { Download } from 'lucide-react';
 
@@ -39,15 +40,31 @@ export default function ViewRelatorios({ user }: { user: AuthUser }) {
     }
   };
 
-  const exportarCsv = () => {
-     let csv = "ID O.S.,Equipamento,Data,Locatario CNPJ,Operador,OS Info\n";
-     data.forEach(d => {
+  const exportarCsv = async () => {
+     let url = '/api/telemetria?export_full=true&';
+     if (filtroLocatario) url += `locatario_cnpj=${filtroLocatario}&`;
+     if (filtroEquipamento) url += `equipamento=${filtroEquipamento}&`;
+     if (dataInicio) url += `data_inicio=${dataInicio}&`;
+     if (dataFim) url += `data_fim=${dataFim}&`;
+
+     setLoading(true);
+     let exportData = data;
+     try {
+       exportData = await apiFetch(url, user.user);
+     } catch (e) {
+       console.error("Erro ao buscar dados para exportação", e);
+     } finally {
+       setLoading(false);
+     }
+
+     let csv = "ID O.S.,Equipamento,Data,Locatario CNPJ,Operador,OS\n";
+     exportData.forEach((d: any) => {
         csv += `"${d.id}","${d.equipamento}","${d.data_leitura ? formatDateUTC(d.data_leitura) : ''}","${d.locatario_cnpj||''}","${d.operador||''}","${d.os||''}"\n`;
      });
      const blob = new Blob([csv], { type: 'text/csv' });
-     const url = window.URL.createObjectURL(blob);
+     const urlBlob = window.URL.createObjectURL(blob);
      const a = document.createElement('a');
-     a.href = url;
+     a.href = urlBlob;
      a.download = `relatorio_os_${new Date().getTime()}.csv`;
      a.click();
   };
@@ -62,7 +79,7 @@ export default function ViewRelatorios({ user }: { user: AuthUser }) {
               <label className="block text-sm text-slate-600 mb-1">Locatário</label>
               <select className="w-full border p-2 rounded" value={filtroLocatario} onChange={e => setFiltroLocatario(e.target.value)}>
                 <option value="">Todos</option>
-                {locatarios.map(l => <option key={l.cnpj_cpf} value={l.cnpj_cpf}>{l.nome}</option>)}
+                {locatarios.map(l => <option key={l.cnpj_cpf} value={l.cnpj_cpf}>{l.nome} ({l.cnpj_cpf ? maskCpfCnpj(l.cnpj_cpf) : ''})</option>)}
               </select>
             </div>
           )}
@@ -111,7 +128,7 @@ export default function ViewRelatorios({ user }: { user: AuthUser }) {
                    <th className="p-3">Data</th>
                    <th className="p-3">Equipamento</th>
                    <th className="p-3">Operador</th>
-                   <th className="p-3">Detalhes O.S.</th>
+                   <th className="p-3">OS</th>
                  </tr>
                </thead>
                <tbody>
