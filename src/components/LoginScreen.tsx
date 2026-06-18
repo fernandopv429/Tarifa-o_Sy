@@ -31,7 +31,21 @@ export default function LoginScreen({ onLogin }: { onLogin: (u: AuthUser) => voi
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
-        <h2 className="text-2xl font-bold text-center text-gray-900 mb-8">SmartOS Login</h2>
+        <div className="flex justify-center mb-8">
+          <img src="/logo.png" alt="VC Green Sustentabilidade & Inovação" className="h-28 object-contain" onError={(e) => {
+            // Fallback if the user hasn't uploaded logo.png to the public folder yet
+            e.currentTarget.style.display = 'none';
+            if (e.currentTarget.nextElementSibling) {
+              (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'block';
+            }
+          }} />
+          <div className="hidden text-center">
+            <h2 className="text-3xl font-black tracking-tight mb-1">
+              <span className="text-[#C6A27A]">VC</span> <span className="text-slate-900">GREEN</span>
+            </h2>
+            <p className="text-sm tracking-wide text-slate-800">sustentabilidade & inovação</p>
+          </div>
+        </div>
         {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-6 text-sm">{error}</div>}
         <form onSubmit={submit} className="space-y-6">
           <div>

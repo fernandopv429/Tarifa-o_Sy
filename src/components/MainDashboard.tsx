@@ -13,7 +13,13 @@ export default function MainDashboard({ user, onLogout }: { user: AuthUser, onLo
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-bold text-slate-800">SmartOS</h1>
+              <img src="/logo_logi.png" alt="VC Green Sustentabilidade & Inovação" className="h-10 object-contain max-w-[200px]" onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                if (e.currentTarget.nextElementSibling) {
+                  (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'block';
+                }
+              }} />
+              <h1 className="text-xl font-bold text-slate-800 hidden">SmartOS</h1>
               <span className="ml-4 px-2 py-1 bg-slate-100 text-slate-800 text-xs font-medium rounded hidden sm:block">
                 {user.role}
               </span>
