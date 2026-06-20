@@ -32,7 +32,7 @@ export default function LoginScreen({ onLogin }: { onLogin: (u: AuthUser) => voi
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
         <div className="flex justify-center mb-8">
-          <img src="/logo.png" alt="VC Green Sustentabilidade & Inovação" className="h-28 object-contain" onError={(e) => {
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="VC Green Sustentabilidade & Inovação" className="h-28 object-contain" onError={(e) => {
             // Fallback if the user hasn't uploaded logo.png to the public folder yet
             e.currentTarget.style.display = 'none';
             if (e.currentTarget.nextElementSibling) {
