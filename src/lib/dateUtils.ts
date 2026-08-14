@@ -9,7 +9,7 @@ export const formatDateUTC = (dateString?: string | Date) => {
       return `${day}/${month}/${year}`;
     }
     const d = new Date(dateString);
-    return d.toLocaleDateString('pt-BR');
+    return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
   } catch (e) {
     return String(dateString);
   }
@@ -19,8 +19,9 @@ export const formatFullDateUTC = (dateString?: string | Date) => {
   if (!dateString) return '';
   try {
     const d = new Date(dateString);
-    return d.toLocaleDateString('pt-BR');
+    return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
   } catch(e) {
     return String(dateString);
   }
 }
+

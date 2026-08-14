@@ -12,6 +12,7 @@ export default function ViewEquipamentos({ user }: { user: AuthUser }) {
   const [locatarios, setLocatarios] = useState<Locatario[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState<Partial<Equipamento>>({ ativo: true });
+  const [errorMsg, setErrorMsg] = useState("");
 
   const [searchQuery, setSearchQuery] = useState("");
   const load = () => {
@@ -24,13 +25,18 @@ export default function ViewEquipamentos({ user }: { user: AuthUser }) {
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (form.id) {
-      await apiFetch(`/api/equipamentos/${form.id}`, user.user, 'PUT', form);
-    } else {
-      await apiFetch('/api/equipamentos', user.user, 'POST', form);
+    setErrorMsg("");
+    try {
+      if (form.id) {
+        await apiFetch(`/api/equipamentos/${form.id}`, user.user, 'PUT', form);
+      } else {
+        await apiFetch('/api/equipamentos', user.user, 'POST', form);
+      }
+      setShowModal(false);
+      load();
+    } catch (e: any) {
+      setErrorMsg(e.message || "Erro ao salvar Equipamento");
     }
-    setShowModal(false);
-    load();
   };
 
   const remove = async (id: number) => {
@@ -41,7 +47,7 @@ export default function ViewEquipamentos({ user }: { user: AuthUser }) {
   
   const generateCsv = () => {
      let csv = "ID,Nome,Codigo,Tipo,Locatario,Ativo,DataCadastro\n";
-     data.forEach(d => csv += `${d.id},${d.nome || ''},${d.codigo},${d.tipo_nome},${d.locatario_nome},${d.ativo},${new Date(d.data_cadastro).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}\n`);
+     data.forEach(d => csv += `${d.id},${d.nome || ''},${d.codigo},${d.tipo_nome},${d.locatario_nome},${d.ativo},${new Date(d.data_cadastro).toLocaleString('pt-BR', { timeZone: 'UTC' })}\n`);
      const blob = new Blob([csv], { type: 'text/csv' });
      const url = window.URL.createObjectURL(blob);
      const a = document.createElement('a');
@@ -65,7 +71,7 @@ export default function ViewEquipamentos({ user }: { user: AuthUser }) {
         />
         <div className="flex gap-2">
           <button onClick={generateCsv} className="bg-gray-600 text-white px-4 py-2 rounded flex items-center gap-2"><Download size={18}/> Exportar CSV</button>
-          {podeEditar && <button onClick={() => { setForm({ativo:true}); setShowModal(true); }} className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded">Novo</button>}
+          {podeEditar && <button onClick={() => { setForm({ativo:true}); setErrorMsg(""); setShowModal(true); }} className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded">Novo</button>}
         </div>
       </div>
 
@@ -102,7 +108,7 @@ export default function ViewEquipamentos({ user }: { user: AuthUser }) {
                 <td className="p-3 font-medium">{d.totalOs || 0}</td>
                 {podeEditar && (
                   <td className="p-3 flex gap-2">
-                    <button onClick={() => { setForm(d); setShowModal(true); }} className="text-blue-600"><Edit2 size={18}/></button>
+                    <button onClick={() => { setForm(d); setErrorMsg(""); setShowModal(true); }} className="text-blue-600"><Edit2 size={18}/></button>
                     <button onClick={() => remove(d.id)} className="text-red-600"><Trash2 size={18}/></button>
                   </td>
                 )}
@@ -117,6 +123,7 @@ export default function ViewEquipamentos({ user }: { user: AuthUser }) {
           <div className="bg-white rounded-lg p-6 w-full max-w-lg">
             <h3 className="text-lg font-bold mb-4">{form.id ? 'Editar' : 'Novo'} Equipamento</h3>
             <form onSubmit={save} className="space-y-4">
+              {errorMsg && <div className="bg-red-50 text-red-600 p-3 rounded text-sm border border-red-200">{errorMsg}</div>}
               <input placeholder="Nome do Equipamento (Opcional)" className="w-full border p-2 rounded" value={form.nome||''} onChange={e=>setForm({...form, nome:e.target.value})} />
               <input required placeholder="Código Identificador (VCGREEN-...)" className="w-full border p-2 rounded font-mono" value={form.codigo||''} onChange={e=>setForm({...form, codigo:e.target.value})} />
               

@@ -13,7 +13,7 @@ export default function MainDashboard({ user, onLogout }: { user: AuthUser, onLo
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <img src={`${import.meta.env.BASE_URL}logo_logi.png`} alt="VC Green" className="h-10 object-contain max-w-[200px]" onError={(e) => {
+              <img src="/logo_logi.png" alt="VC Green" className="h-10 object-contain max-w-[200px]" onError={(e) => {
                 e.currentTarget.style.display = 'none';
                 if (e.currentTarget.nextElementSibling) {
                   (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'block';

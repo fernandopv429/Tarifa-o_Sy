@@ -1445,7 +1445,11 @@ async function startServer() {
 
     // Global Database Errors Handlers
     if (err.message) {
-      if (err.message.includes('Access denied')) {
+      if (err.message.includes('ER_DUP_ENTRY') || err.message.includes('Duplicate entry')) {
+        statusCode = 400;
+        message = 'O registro que você tentou salvar já existe no sistema (Equipamento, Usuário ou Locatário duplicado).';
+        code = 'DB_DUPLICATE_ENTRY';
+      } else if (err.message.includes('Access denied')) {
         statusCode = 401;
         message = 'Erro de Autenticação no Banco: Verifique sua DATABASE_URL no painel de Secrets.';
         code = 'DB_AUTH_FAILED';

@@ -8,6 +8,7 @@ export default function ViewTipoEquipamento({ user }: { user: AuthUser }) {
   const [data, setData] = useState<(TipoEquipamento & { em_uso?: number })[]>([]);
   const [nome, setNome] = useState('');
   const [editId, setEditId] = useState<number | null>(null);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const [searchQuery, setSearchQuery] = useState("");
   const load = () => apiFetch('/api/tipo-equipamentos', user.user).then(setData);
@@ -15,14 +16,19 @@ export default function ViewTipoEquipamento({ user }: { user: AuthUser }) {
 
   const save = async () => {
     if(!nome) return;
-    if (editId) {
-       await apiFetch(`/api/tipo-equipamentos/${editId}`, user.user, 'PUT', { nome });
-    } else {
-       await apiFetch('/api/tipo-equipamentos', user.user, 'POST', { nome });
+    setErrorMsg("");
+    try {
+      if (editId) {
+         await apiFetch(`/api/tipo-equipamentos/${editId}`, user.user, 'PUT', { nome });
+      } else {
+         await apiFetch('/api/tipo-equipamentos', user.user, 'POST', { nome });
+      }
+      setNome('');
+      setEditId(null);
+      load();
+    } catch (e: any) {
+      setErrorMsg(e.message || "Erro ao salvar Tipo de Equipamento");
     }
-    setNome('');
-    setEditId(null);
-    load();
   };
 
   return (
@@ -37,10 +43,11 @@ export default function ViewTipoEquipamento({ user }: { user: AuthUser }) {
           onChange={e => setSearchQuery(e.target.value)} 
         />
       </div>
+      {errorMsg && <div className="bg-red-50 text-red-600 p-3 rounded text-sm border border-red-200 mb-4">{errorMsg}</div>}
       <div className="flex gap-2 mb-6">
         <input value={nome} onChange={e=>setNome(e.target.value)} placeholder={editId ? "Editar tipo..." : "Novo tipo..."} className="border p-2 rounded flex-1" />
         <button onClick={save} className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded">{editId ? 'Salvar' : 'Adicionar'}</button>
-        {editId && <button onClick={() => { setEditId(null); setNome(''); }} className="bg-gray-200 text-gray-800 px-4 py-2 rounded">Cancelar</button>}
+        {editId && <button onClick={() => { setEditId(null); setNome(''); setErrorMsg(""); }} className="bg-gray-200 text-gray-800 px-4 py-2 rounded">Cancelar</button>}
       </div>
       <ul className="divide-y border rounded bg-white">
          {data.map(d => (

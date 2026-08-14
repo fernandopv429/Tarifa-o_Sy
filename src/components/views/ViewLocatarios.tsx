@@ -4,7 +4,7 @@ import { apiFetch } from '../../lib/api';
 import { Locatario, AuthUser } from '../../types';
 import { Edit2, Trash2 } from 'lucide-react';
 import { isValidCpfCnpj } from '../../lib/validators';
-import { maskCpfCnpj } from '../../lib/masks';
+import { maskCpfCnpj, maskPhone } from '../../lib/masks';
 
 export default function ViewLocatarios({ user }: { user: AuthUser }) {
   const [data, setData] = useState<Locatario[]>([]);
@@ -28,13 +28,17 @@ export default function ViewLocatarios({ user }: { user: AuthUser }) {
       }
     }
 
-    if (form.id) {
-      await apiFetch(`/api/locatarios/${form.id}`, user.user, 'PUT', form);
-    } else {
-      await apiFetch('/api/locatarios', user.user, 'POST', form);
+    try {
+      if (form.id) {
+        await apiFetch(`/api/locatarios/${form.id}`, user.user, 'PUT', form);
+      } else {
+        await apiFetch('/api/locatarios', user.user, 'POST', form);
+      }
+      setShowModal(false);
+      load();
+    } catch (e: any) {
+      setErrorMsg(e.message || "Erro ao salvar Locatário");
     }
-    setShowModal(false);
-    load();
   };
 
   const remove = async (id: number) => {
@@ -94,7 +98,7 @@ export default function ViewLocatarios({ user }: { user: AuthUser }) {
               <input required placeholder="Nome / Razão" className="w-full border p-2 rounded" value={form.nome||''} onChange={e=>setForm({...form, nome:e.target.value})} />
               <input required placeholder="CNPJ/CPF" pattern="(^[0-9]{11}$)|(^[0-9]{14}$)" title="Formato inválido. Digite apenas números (11 para CPF, 14 para CNPJ)." className={`w-full border p-2 rounded ${form.id ? 'bg-gray-100 cursor-not-allowed' : ''}`} value={maskCpfCnpj(form.cnpj_cpf || '')} onChange={e=> { setForm({...form, cnpj_cpf: e.target.value.replace(/\D/g, "")}); if (errorMsg) setErrorMsg(""); }} disabled={!!form.id} />
               <input placeholder="Endereço" className="w-full border p-2 rounded" value={form.endereco||''} onChange={e=>setForm({...form, endereco:e.target.value})} />
-              <input placeholder="Telefone" className="w-full border p-2 rounded" value={form.telefone||''} onChange={e=>setForm({...form, telefone: e.target.value})} />
+              <input placeholder="Telefone" className="w-full border p-2 rounded" value={form.telefone||''} onChange={e=>setForm({...form, telefone: maskPhone(e.target.value)})} />
               <input placeholder="Nome do Contato" className="w-full border p-2 rounded" value={form.contato_nome||''} onChange={e=>setForm({...form, contato_nome:e.target.value})} />
               <input type="email" pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$" title="O email deve conter um domínio válido (ex: @dominio.com.br)" placeholder="Email do Contato" className="w-full border p-2 rounded" value={form.contato_email||''} onChange={e=>setForm({...form, contato_email:e.target.value.toLowerCase().replace(/\s/g, "")})} />
               <input type="text" placeholder="Senha de Acesso (Usuario Master)" className="w-full border p-2 rounded" value={(form as any).senha_master||''} onChange={e=>setForm({...form, senha_master:e.target.value} as any)} />

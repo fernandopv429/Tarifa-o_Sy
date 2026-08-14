@@ -10,6 +10,7 @@ export default function ViewUsuarios({ user }: { user: AuthUser }) {
   const [locatarios, setLocatarios] = useState<Locatario[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState<Partial<AppUser>&{password?:string, ativo?:boolean}>({});
+  const [errorMsg, setErrorMsg] = useState("");
 
   const [searchQuery, setSearchQuery] = useState("");
   const load = () => {
@@ -23,15 +24,20 @@ export default function ViewUsuarios({ user }: { user: AuthUser }) {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!podeEditar) return;
-    if (form.id) {
-      await apiFetch(`/api/usuarios/${form.id}`, user.user, 'PUT', form);
-    } else {
-      let role = form.role || 'LOCATARIO_MASTER';
-      if (user.role === 'LOCATARIO_MASTER') { role = 'LOCATARIO_MASTER'; form.locatario_cnpj = user.locatario_cnpj; }
-      await apiFetch('/api/usuarios', user.user, 'POST', { ...form, role });
+    setErrorMsg("");
+    try {
+      if (form.id) {
+        await apiFetch(`/api/usuarios/${form.id}`, user.user, 'PUT', form);
+      } else {
+        let role = form.role || 'LOCATARIO_MASTER';
+        if (user.role === 'LOCATARIO_MASTER') { role = 'LOCATARIO_MASTER'; form.locatario_cnpj = user.locatario_cnpj; }
+        await apiFetch('/api/usuarios', user.user, 'POST', { ...form, role });
+      }
+      setShowModal(false);
+      load();
+    } catch (e: any) {
+      setErrorMsg(e.message || "Erro ao salvar Usuário");
     }
-    setShowModal(false);
-    load();
   };
 
   const toggleAtivo = async (d: any) => {
@@ -51,7 +57,7 @@ export default function ViewUsuarios({ user }: { user: AuthUser }) {
           value={searchQuery} 
           onChange={e => setSearchQuery(e.target.value)} 
         />
-        {podeEditar && <button onClick={() => { setForm({ senha_padrao: true, ativo: true }); setShowModal(true); }} className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded">Novo Usuário</button>}
+        {podeEditar && <button onClick={() => { setForm({ senha_padrao: true, ativo: true }); setErrorMsg(""); setShowModal(true); }} className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded">Novo Usuário</button>}
       </div>
       
       <div className="overflow-x-auto">
@@ -80,7 +86,7 @@ export default function ViewUsuarios({ user }: { user: AuthUser }) {
                 </td>
                 {podeEditar && (
                   <td className="p-3 flex gap-2">
-                    <button onClick={() => { setForm(d); setShowModal(true); }} className="text-blue-600"><Edit2 size={18}/></button>
+                    <button onClick={() => { setForm(d); setErrorMsg(""); setShowModal(true); }} className="text-blue-600"><Edit2 size={18}/></button>
                     <button onClick={() => toggleAtivo(d)} className={d.ativo ? "text-red-600" : "text-emerald-600"}>{d.ativo ? "Bloquear" : "Desbloquear"}</button>
                   </td>
                 )}
@@ -95,6 +101,7 @@ export default function ViewUsuarios({ user }: { user: AuthUser }) {
           <div className="bg-white rounded-lg p-6 w-full max-w-lg">
              <h3 className="text-lg font-bold mb-4">{form.id ? 'Editar' : 'Novo'} Usuário</h3>
              <form onSubmit={save} className="space-y-4">
+                {errorMsg && <div className="bg-red-50 text-red-600 p-3 rounded text-sm border border-red-200">{errorMsg}</div>}
                 <input required placeholder="Nome Completo" className="w-full border p-2 rounded" value={form.nome||''} onChange={e=>setForm({...form, nome:e.target.value})} />
                 <input type="email" pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$" title="O email deve conter um domínio válido (ex: @dominio.com.br)" required placeholder="Email" className="w-full border p-2 rounded" value={form.username||''} onChange={e=>setForm({...form, username:e.target.value.toLowerCase().replace(/\s/g, "")})} />
                 <input type={form.id ? "password" : "text"} required={!form.id} placeholder={form.id ? "Nova Senha (opcional)" : "Senha Inicial"} className="w-full border p-2 rounded" value={form.password||''} onChange={e=>setForm({...form, password:e.target.value})} />
